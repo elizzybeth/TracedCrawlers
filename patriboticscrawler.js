@@ -1,148 +1,96 @@
-var Crawler = require("crawler");
+var TracedCrawler = require("./crawlerabstracted.js");
 
-// Retrieve
-var MongoClient = require('mongodb').MongoClient;
+const articleURLs = [
+  "https:\/\/patribotics.blog\/2017\/09\/22\/exclusive-fisa-target-svb-bank-server-sent-cambridge-analytica-data-to-trump\/",
+  "https:\/\/patribotics.blog\/2017\/05\/31\/exclusive-devin-nunes-top-secret-clearance-has-been-revoked\/",
+  "https:\/\/patribotics.blog\/2017\/04\/01\/alfa-bank-trump-tower-and-a-social-media-impeachment\/",
+  "https:\/\/patribotics.blog\/2018\/03\/20\/cambridge-analytica-next-their-links-to-russian-propaganda\/",
+  "https:\/\/patribotics.blog\/2018\/03\/10\/did-carter-page-call-devin-nunes-from-moscow\/",
+  "https:\/\/patribotics.blog\/2018\/02\/25\/putins-wikileaks-host-mob-laundromat-funded-gop\/",
+  "https:\/\/patribotics.blog\/2018\/01\/02\/trump-russia-collusion-why-muellers-not-thinking-small\/",
+  "https:\/\/patribotics.blog\/2018\/01\/01\/exclusive-new-york-times-moscow-hack-compromised-papers-emails\/",
+  "https:\/\/patribotics.blog\/2017\/12\/01\/exclusive-erik-prince-worked-for-chinese-intelligence-pence-targeted\/",
+  "https:\/\/patribotics.blog\/2017\/11\/24\/exclusive-brexit-referendum-may-need-to-be-redone\/",
+  "https:\/\/patribotics.blog\/2017\/11\/09\/exclusive-china-syndrome-xi-and-putin-partnered-in-u-s-election-interference\/",
+  "https:\/\/patribotics.blog\/2017\/11\/05\/exclusive-sources-general-flynn-wept-as-he-asked-fbi-to-spare-mike-flynn-jr\/",
+  "https:\/\/patribotics.blog\/2017\/10\/29\/exclusive-mueller-has-dozens-of-sealed-indictments-including-on-donald-trump\/",
+  "https:\/\/patribotics.blog\/2017\/10\/29\/mueller-meltdown-trump-other-suspects-squeal-online-over-charges\/",
+  "https:\/\/patribotics.blog\/2017\/10\/26\/exclusive-farages-brexit-team-mueller-interview-over-cambridge-analytica\/",
+  "https:\/\/patribotics.blog\/2017\/09\/24\/exclusive-trey-gowdy-connected-pac-linked-to-russias-hack-of-america\/",
+  "https:\/\/patribotics.blog\/2017\/09\/22\/exclusive-sources-paul-manaforts-secret-florida-storage-facility\/",
+  "https:\/\/patribotics.blog\/2017\/09\/20\/fun-with-fisa-the-trump-russia-treason-timeline\/",
+  "https:\/\/patribotics.blog\/2017\/09\/18\/the-curious-case-of-the-march-for-truth-and-the-bulgarian-hacker\/",
+  "https:\/\/patribotics.blog\/2017\/08\/29\/a-note-on-patribotics-louise-mensch\/",
+  "https:\/\/patribotics.blog\/2017\/08\/15\/pimpotus-trump-models-and-russias-human-traffickers\/",
+  "https:\/\/patribotics.blog\/2017\/08\/07\/rex-tillerson-under-criminal-investigation-for-wayne-tracker-fraud\/",
+  "https:\/\/patribotics.blog\/2017\/08\/04\/scot-sedition-june-24-treasonmeeting-2\/",
+  "https:\/\/patribotics.blog\/2017\/07\/20\/fox-news-under-fbi-investigation-fcc-broadcasting-license-under-threat\/",
+  "https:\/\/patribotics.blog\/2017\/07\/18\/exclusive-eric-schneiderman-had-donald-trump-under-state-surveillance\/",
+  "https:\/\/patribotics.blog\/2017\/07\/18\/exclusive-gchq-has-recordings-of-donald-trump-jr-and-kushners-russia-meeting\/",
+  "https:\/\/patribotics.blog\/2017\/07\/15\/exclusive-donald-trump-called-into-a-trump-tower-russian-spy-meeting\/",
+  "https:\/\/patribotics.blog\/2017\/06\/29\/exclusive-sigint-on-kushnerivanka-inside-russian-embassy\/",
+  "https:\/\/patribotics.blog\/2017\/06\/29\/exclusive-reince-wanted-to-run-nato-sigint-on-trumps-treasonweasels\/",
+  "https:\/\/patribotics.blog\/2017\/06\/25\/exclusive-sheriff-clarke-attacked-black-lives-matter-on-putins-orders\/",
+  "https:\/\/patribotics.blog\/2017\/06\/23\/carolina-conspiracy-jack-posobiec-and-the-fakes-that-forced-comeys-hand\/",
+  "https:\/\/patribotics.blog\/2017\/06\/21\/hostkey-west-trumps-miami-red-square\/",
+  "https:\/\/patribotics.blog\/2017\/06\/18\/exclusive-sessions-ordered-two-comey-memos-rosenstein-not-recuse\/",
+  "https:\/\/patribotics.blog\/2017\/06\/17\/daughtergate-ivanka-trump-scrubbed-from-trump-poker-shell-companies\/",
+  "https:\/\/patribotics.blog\/2017\/06\/13\/exclusive-russian-ambassador-kislyaks-phone-hacked-by-five-eyes\/",
+  "https:\/\/patribotics.blog\/2017\/06\/13\/exclusive-director-comey-legally-taped-calls-meetings-with-trump\/",
+  "https:\/\/patribotics.blog\/2017\/06\/09\/paul-ryan-taped-with-russian-ambassador-on-gop-money-laundering\/",
+  "https:\/\/patribotics.blog\/2017\/06\/08\/comey-day-meticulously-executed-testimony-was-counterintelligence-plan\/",
+  "https:\/\/patribotics.blog\/2017\/06\/08\/comey-day-cometh-heres-what-to-expect\/",
+  "https:\/\/patribotics.blog\/2017\/05\/31\/exclusive-federal-marshals-execute-seizure-warrants-at-trump-tower\/",
+  "https:\/\/patribotics.blog\/2017\/05\/29\/donald-trump-sealed-indictment-started-with-eric-schneiderman\/",
+  "https:\/\/patribotics.blog\/2017\/05\/28\/op-ed-imagine-theres-no-donald-what-if-the-45th-president-were-orrin-hatch\/",
+  "https:\/\/patribotics.blog\/2017\/05\/25\/naveed-jamali-tweets-he-was-a-source-on-the-fisa-warrant-story\/",
+  "https:\/\/patribotics.blog\/2017\/05\/25\/milo-yiannopoulus-has-an-account-with-a-fisa-targeted-russian-bank\/",
+  "https:\/\/patribotics.blog\/2017\/05\/23\/exclusive-marshal-of-the-supreme-court-warned-trump-over-muslim-ban\/",
+  "https:\/\/patribotics.blog\/2017\/05\/22\/mike-flynn-turns-on-trump-talks-to-fbi\/",
+  "https:\/\/patribotics.blog\/2017\/05\/20\/exclusive-judiciary-committee-considering-articles-of-impeachment\/",
+  "https:\/\/patribotics.blog\/2017\/05\/17\/comeys-fbi-computer-illegally-accessed-data-given-to-russian-diplomats\/",
+  "https:\/\/patribotics.blog\/2017\/05\/16\/exclusive-u-s-marshals-readying-plan-approved-by-justice-dept-official\/",
+  "https:\/\/patribotics.blog\/2017\/05\/15\/exclusive-fbi-no-longer-glomar-ing-on-politicized-leaks-to-giuliani\/",
+  "https:\/\/patribotics.blog\/2017\/05\/14\/exclusive-sealed-indictment-granted-against-donald-trump\/",
+  "https:\/\/patribotics.blog\/2017\/05\/13\/trumps-presidency-ended-may-9th-hatch-getting-security-briefings\/",
+  "https:\/\/patribotics.blog\/2017\/05\/11\/sources-russia-probe-means-president-hatch-rico-case-against-gop\/",
+  "https:\/\/patribotics.blog\/2017\/05\/11\/exclusive-comey-day-first-trump-russia-arrests-possible-thursday\/",
+  "https:\/\/patribotics.blog\/2017\/05\/06\/exclusive-six-fisa-warrants-granted-in-trump-russia-cases\/",
+  "https:\/\/patribotics.blog\/2017\/05\/01\/exclusive-sean-spicer-tweeted-a-bitcoin-address-not-his-password\/",
+  "https:\/\/patribotics.blog\/2017\/04\/29\/sources-boris-epshteyn-paid-russian-hackers-for-both-team-trump-and-fsb\/",
+  "https:\/\/patribotics.blog\/2017\/04\/23\/did-donald-trump-commission-russias-hack-of-the-us-election-himself\/",
+  "https:\/\/patribotics.blog\/2017\/04\/16\/carter-page-went-to-moscow-with-a-tape-of-donald-trump-offering-treason-for-hacking\/",
+  "https:\/\/patribotics.blog\/2017\/04\/16\/mike-flynns-treason-tour-global-russian-propaganda-coordinated-with-trump\/",
+  "https:\/\/patribotics.blog\/2017\/04\/04\/putins-hacker-wikileaks-host-pyotr-chayanov-hacked-americas-vote-system-and-the-dnc\/",
+  "https:\/\/patribotics.blog\/2017\/03\/28\/kushner-and-trump-taped-at-secret-trump-tower-meetings-with-russians\/",
+  "https:\/\/patribotics.blog\/2017\/03\/27\/did-nunes-leak-fisa-warrant-info-via-white-house-lawyer-michael-ellis\/",
+  "https:\/\/patribotics.blog\/2017\/03\/27\/boris-epshteyn-named-in-july-fisa-application-did-nunes-obstruct-justice\/",
+  "https:\/\/patribotics.blog\/2017\/03\/14\/wikileaks-hands-keys-to-putins-russian-hacker-readers-leakers-tracked\/",
+  "https:\/\/patribotics.blog\/2017\/03\/12\/wikileaks-is-connected-to-russia-despite-their-claimswikileaks-is-connected-to-russia-despite-their-claims\/",
+  "https:\/\/patribotics.blog\/2017\/02\/26\/planespotting-michael-cohens-amazing-journey-louise-mensch\/",
+  "https:\/\/patribotics.blog\/2017\/02\/14\/the-carolina-conspiracy-putin-catfished-weiner-louise-mensch\/",
+  "https:\/\/patribotics.blog\/2017\/02\/07\/jeff-sessions-attorney-general-suspect\/",
+  "https:\/\/patribotics.blog\/2017\/01\/17\/dear-mr-putin-lets-play-chess-louise-mensch-trump-russia\/"
+];
 
-var setupCrawler = function(collection){
-    var c = new Crawler({
-        "maxConnections":2,
+const options = {
+    site: "patribotics",
+    getArticleText: function($){
+        return $(".entry-content.clearfix > p").text();
+    },
+    startURL: "https://patribotics.blog/",
+    indexCallback: function(error, result, done, indexCrawler, queueArticle){
 
-        // This will be called for each crawled page
-        "callback":function(error,result,done) {
-            if(error) {
-                console.log("Error getting page.");
-                console.dir(error);
-                return;
-            }
-            const $ = result.$;
-            var rx = /^https:\/\/patribotics.blog/;
+      articleURLs.forEach(URL => queueArticle(URL));
 
-            console.log("Got URL:" + rx);
+/*      result.$(".entry-title a").each(function(index,a) {
+          console.log(a.attribs.href);
+          queueArticle(a.attribs.href);
+      });
 
-            if(rx.test(result.request.uri.href)) {
-                // on the index page
-                console.log("On the index: " + result.request.uri.href);
-                $(".entry-title a").each(function(index,a) {
-                    console.log(a.attribs.href);
-                    collection.findOne({URL: a.attribs.href}, function(err, article){
-                        if(err){
-                            console.log("Article exist check failed.");
-                            console.log(err);
-                        } else if(article === null){
-                            // not in the database already
-                            // so let's queue it
-                            console.log("Queueing an article: " + a.attribs.href);
-                            c.queue(a.attribs.href);
-                        } else {
-                            console.log("Skipping an article: " + a.attribs.href);
-                        }
-                    });
-                });
-//                c.queue($(".load-more-button a")[0].href);
-// Not sure what to do about the "older posts" button
-            } else {
-                console.log("Loaded article: " + result.request.uri.href);
-            }
-
-/* from Slate
-            var singlePage = $(".single-page a");
-            if (singlePage.length){
-                console.log("Switching to single page: " + singlePage[0].href);
-                c.queue(singlePage[0].href);
-                return;
-            }
+      // then call indexCrawler.queue(on the next page of article index, however get that);
 */
-
-             var articleData = {
-                // HTML: $('html').prop('outerHTML'),
-                URL: result.request.uri.href,
-                author: $(".author vcard > a").text().trim(),
-                title: $(".entry-title").text().trim(),
-                // patribotics has no sections
-                // section: $(".print-only + .prop-name > a").text().trim(),
-                pubDate: new Date($(".entry-date.published.updated").text()),
-                retDate: new Date,
-                // links:[],
-                text: $(".entry-content.clearfix > p").text().trim()
-            };
-
-
-/*
-            $(".entry-content.clearfix > p",".entry-content.clearfix > blockquote").each(function(index,p) {
-                articleData.paragraphs.push($(p).text().trim());
-            });
-            // Join array elements into a string.
-            articleData.fullText = articleData.paragraphs.join(" ");
-
-            // Then turn all new lines into spaces (with replace function).
-            articleData.fullText = articleData.fullText.replace(/[\r\n]/," ");
-
-            // Then turn all double spaces into single spaces (replace).
-            articleData.fullText = articleData.fullText.replace(/\s\s+/," ");
-
-            // Then trim off the final space at end.
-            articleData.fullText = articleData.fullText.trim();
-
-            // Then count words with string.split.
-            articleData.wordCount = articleData.fullText.split(" ").length;
-
-*/
-
-/* Link code from Slate crawler, in case I want to use it again sometime
-
-            // fill authors array
-            $(".author vcard > a").each(function(index,a){
-                articleData.authors.push($(a).text().trim());
-            });
-
-            $(".body a").each(function(index,a) {
-                var text = $(a).text().trim();
-                if(text !== "More..." && text !== "Join In" && text !== "" && text !== undefined){
-                    articleData.links.push({
-                        text: text,
-                        href: a.href,
-                        length: text.length,
-                        wordCount: text.split(" ").length
-                    });
-                }
-            });
-*/
-
-
-            collection.insert(articleData, {w: 1}, function(err, result) {
-                console.log("Inserting article data.");
-                console.log(articleData);
-                if(err) {
-                    console.log("Couldn't save article data.");
-                    console.dir(err);
-                    process.kill();
-                }
-            });
-
-          done();
-        }
-    });
-    c.queue("https://patribotics.blog/");
+    }
 };
 
-// Connect to the db
-MongoClient.connect("mongodb://localhost:27017/patribotics", function(err, db) {
-    if(err) {
-        console.log("Couldn't connect.");
-        console.dir(err);
-        process.kill();
-    }
-    db.createCollection('articles', function(err, collection) {
-        if(err) {
-            console.log("Couldn't create articles collection.");
-            console.dir(err);
-            process.kill();
-        }
-        setupCrawler(collection);
-
-    });
-});
-
-// Queue just one URL, with default callback
-
-// archive page: http://www.slate.com/full_slate.html
+var crawler = new TracedCrawler(options);
