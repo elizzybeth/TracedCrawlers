@@ -58,10 +58,10 @@ var setupCrawler = function(collection){
                 });
 //                c.queue($(".load-more-button a")[0].href);
 // Not sure what to do about the "older posts" button
-                return;
             } else {
                 console.log("Loaded article: " + result.request.uri.href);
             }
+
 /* from Slate
             var singlePage = $(".single-page a");
             if (singlePage.length){
@@ -71,20 +71,22 @@ var setupCrawler = function(collection){
             }
 */
 
-/* Next up, fix this:
-            var articleData = {
-                HTML: $('html').prop('outerHTML'),
+             var articleData = {
+                // HTML: $('html').prop('outerHTML'),
                 URL: result.request.uri.href,
-                authors: [],
+                author: $(".author vcard > a").text().trim(),
                 title: $(".entry-title").text().trim(),
-                section: $(".print-only + .prop-name > a").text().trim(),
-                pubDate: new Date($(".pub-date").text()),
+                // patribotics has no sections
+                // section: $(".print-only + .prop-name > a").text().trim(),
+                pubDate: new Date($(".entry-date.published.updated").text()),
                 retDate: new Date,
-                links:[],
-                paragraphs:[]
+                // links:[],
+                text: $(".entry-content.clearfix > p").text().trim()
             };
 
-            $(".text.parbase.section > p").each(function(index,p) {
+
+/*
+            $(".entry-content.clearfix > p",".entry-content.clearfix > blockquote").each(function(index,p) {
                 articleData.paragraphs.push($(p).text().trim());
             });
             // Join array elements into a string.
@@ -102,12 +104,15 @@ var setupCrawler = function(collection){
             // Then count words with string.split.
             articleData.wordCount = articleData.fullText.split(" ").length;
 
+*/
+
+/* Link code from Slate crawler, in case I want to use it again sometime
+
             // fill authors array
-            $("#main_byline a").each(function(index,a){
+            $(".author vcard > a").each(function(index,a){
                 articleData.authors.push($(a).text().trim());
             });
 
-            // $ is a jQuery instance scoped to the server-side DOM of the page
             $(".body a").each(function(index,a) {
                 var text = $(a).text().trim();
                 if(text !== "More..." && text !== "Join In" && text !== "" && text !== undefined){
@@ -119,14 +124,19 @@ var setupCrawler = function(collection){
                     });
                 }
             });
+*/
+
+
             collection.insert(articleData, {w: 1}, function(err, result) {
+                console.log("Inserting article data.");
+                console.log(articleData);
                 if(err) {
                     console.log("Couldn't save article data.");
                     console.dir(err);
                     process.kill();
                 }
             });
-*/
+
           done();
         }
     });
