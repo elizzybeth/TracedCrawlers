@@ -1,21 +1,3 @@
-/* Tues morning:
-
-Not sure why the jQuery is failing. npm installed jQuery, getting the console.error(
-
-
-C:\Users\eliza\Desktop\TracedCrawlers\patriboticscrawler.js:25
-                $(".entry-title a").each(function(index,a) {
-                                   ^
-
-TypeError: Cannot read property 'each' of undefined
-    at Object.callback (C:\Users\eliza\Desktop\TracedCrawlers\patriboticscrawler.js:25:36)
-);
-
-Is this because it's not recognizing .each? or not recognizing the .entry-title because it's an h2, not a div?
-
-*/
-
-
 var Crawler = require("crawler");
 
 // Retrieve
