@@ -9,11 +9,30 @@ async function findSites(articles){
 // for each site, find all the frequencyObjects for that site
 async function getFrequencyObjectBySite(articles){
   var sites = await findSites(articles);
-  console.log(sites);
   var results = {};
   sites.forEach(async function(site){
-    console.log(site);
+    console.log("On site: ", site);
     results[site] = await getOneSiteFrequencyObject(site, articles);
+
+    function makeFrequencyArray(obj){
+      var frequencyArray = Object.keys(obj).map(key => ({word: key, count: obj[key]}));
+      return frequencyArray;
+    }
+    function sortFrequencyArray(FA){
+        function compare(a, b){
+          if(a.count < b.count){
+            return 1;
+          } else if(a.count > b.count){
+            return -1;
+          } else {
+            return 0;
+          }
+        }
+        var sortedFA = FA.sort(compare);
+        console.log(sortedFA);
+    }
+    sortFrequencyArray(makeFrequencyArray(results[site]));
+
     process.exit();
   });
   return results;
@@ -34,10 +53,12 @@ async function getOneSiteFrequencyObject(site, articles) {
       wordCount += frequency[word];
     });
   });
-  console.log(accumulator);
-  console.log(wordCount);
-  return 1;
+//  console.log(accumulator);
+//  console.log(wordCount)
+
+  return accumulator;
 }
+
 
 
 /*
