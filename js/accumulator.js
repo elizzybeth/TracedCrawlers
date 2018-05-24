@@ -1,3 +1,10 @@
+/*
+Wish list:
+  Aggregate frequency lists by political affiliation
+  Get "vocabulary size" of each site = unique words / total words
+
+*/
+
 var MongoClient = require('mongodb').MongoClient;
 
 // find unique list of sites
@@ -6,39 +13,80 @@ async function findSites(articles){
   return sites;
 }
 
+async function asyncForEach(array, callback){
+  for (let index = 0; index < array.length; index++) {
+    await callback(array[index], index, array)
+  }
+}
+
 // for each site, find all the frequencyObjects for that site
 async function getFrequencyObjectBySite(articles){
   var sites = await findSites(articles);
   var results = {};
-  sites.forEach(async function(site){
-    console.log("On site: ", site);
-    results[site] = await getOneSiteFrequencyObject(site, articles);
+  var sorted = {};
 
-    function makeFrequencyArray(obj){
-      var frequencyArray = Object.keys(obj).map(key => ({word: key, count: obj[key]}));
-      return frequencyArray;
-    }
-    function sortFrequencyArray(FA){
-        function compare(a, b){
-          if(a.count < b.count){
-            return 1;
-          } else if(a.count > b.count){
-            return -1;
-          } else {
-            return 0;
-          }
-        }
-        var sortedFA = FA.sort(compare);
-        console.log(sortedFA);
-    }
-    sortFrequencyArray(makeFrequencyArray(results[site]));
 
-    process.exit();
-  });
-  return results;
+  for(var i=0; i < sites.length; i++){
+    results[sites[i]] = await getOneSiteFrequencyObject(sites[i], articles);
+    sorted[sites[i]] = await sortFrequencyArray(makeFrequencyArray(results[sites[i]]));
+  }
+
+  return sorted;
 }
 
-async function getOneSiteFrequencyObject(site, articles) {
+
+/* Probably don't need this but saving it JIC
+async function pairSiteAndFO(sites, results){
+  var paired = {};
+  console.log("Results in pairSiteAndFO: ");
+  console.log(results);
+  for(var i = 0; i < 1; i++){
+    //paired[i] = {sites[i], results[i]};
+  }
+//  console.log(paired);
+  return paired;
+}
+
+*/
+
+async function saveSorted(sorted, sitesCollection){
+  var size = await Object.keys(sorted).length; // prob can delete
+  /*
+  var idIncrementer = 1;
+  for(var key in sorted){
+    frequencyObjectsBySite.insert({"_id": idIncrementer}, {"site": key, "frequency": site[key]}, {upsert: true});
+  }
+  */
+
+  for(var i=0; i < size; i++){
+    //console.log(sorted[i]);
+    var site = Object.keys(sorted)[i];
+    var update = {"site": site, "frequency": sorted[site]};
+    console.log(update);
+    await sitesCollection.updateOne({"_id": i}, {$set: update}, {upsert: true});
+  }
+}
+
+function makeFrequencyArray(obj){
+  var frequencyArray = Object.keys(obj).map(key => ({word: key, count: obj[key]}));
+  return frequencyArray;
+}
+
+function sortFrequencyArray(FA){
+    function compare(a, b){
+      if(a.count < b.count){
+        return 1;
+      } else if(a.count > b.count){
+        return -1;
+      } else {
+        return 0;
+      }
+    }
+    var sortedFA = FA.sort(compare);
+    return sortedFA;
+}
+
+async function getOneSiteFrequencyObject(site, articles){
   var FOCursor = await articles.find({"site": site},{"frequency": true});
   var FOArray = await FOCursor.toArray();
   var accumulator = {};
@@ -53,13 +101,20 @@ async function getOneSiteFrequencyObject(site, articles) {
       wordCount += frequency[word];
     });
   });
-//  console.log(accumulator);
-//  console.log(wordCount)
 
   return accumulator;
 }
 
-
+/*
+// this isn't geoing to work right, can't access FOArray properties like this
+function saveFOArray(FOArray) {
+  var incrementID = 1;
+  FOArray.forEach(async function(site){
+    frequencyObjectsBySite.update({"_id": incrementID},{"site": FOArray.site, "frequency": FOArray.frequencyArray});
+    incrementID++;
+  });
+}
+*/
 
 /*
 
@@ -92,9 +147,14 @@ MongoClient.connect("mongodb://localhost:27017/tracedcrawler", function(err, db)
       console.dir(err);
       process.kill();
     }
-    // put function calls here
-    getFrequencyObjectBySite(articles);
-  })
-
-
+    db.createCollection('sitesCollection', async function(err,sitesCollection){
+      if(err) {
+        console.log("Couldn't create frequencyObjects collection.");
+        console.dir(err);
+        process.kill();
+      }
+      var sorted = await getFrequencyObjectBySite(articles);
+      saveSorted(sorted, sitesCollection);
+    });
+  });
 });
