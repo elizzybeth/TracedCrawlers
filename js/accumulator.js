@@ -34,21 +34,6 @@ async function getFrequencyObjectBySite(articles){
   return sorted;
 }
 
-
-/* Probably don't need this but saving it JIC
-async function pairSiteAndFO(sites, results){
-  var paired = {};
-  console.log("Results in pairSiteAndFO: ");
-  console.log(results);
-  for(var i = 0; i < 1; i++){
-    //paired[i] = {sites[i], results[i]};
-  }
-//  console.log(paired);
-  return paired;
-}
-
-*/
-
 async function saveSorted(sorted, sitesCollection){
   var size = await Object.keys(sorted).length; // prob can delete
   /*
@@ -105,35 +90,6 @@ async function getOneSiteFrequencyObject(site, articles){
   return accumulator;
 }
 
-/*
-// this isn't geoing to work right, can't access FOArray properties like this
-function saveFOArray(FOArray) {
-  var incrementID = 1;
-  FOArray.forEach(async function(site){
-    frequencyObjectsBySite.update({"_id": incrementID},{"site": FOArray.site, "frequency": FOArray.frequencyArray});
-    incrementID++;
-  });
-}
-*/
-
-/*
-
-
-// reduce the frequencyObjects
-
-// from [one frequency object] to [meta frequency object]
-
-
-
-
-// imagine we have array called articles that's an array of frequencyObject-having objects; this will be the result of a mongo query, that's only frequencyObjects
-
-var metaFrequencyObject = articles.reduce(function(accumulator, article){ //
-  frequencyObjectToMeta(accumulator, article.frequencyObject);
-  return accumulator;
-},{});
-
-*/
 
 MongoClient.connect("mongodb://localhost:27017/tracedcrawler", function(err, db){
   if(err) {
